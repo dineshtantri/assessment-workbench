@@ -34,7 +34,6 @@ LibreChat is a comprehensive open-source AI chat platform that brings together m
 - **Routing**: React Router for SPA navigation
 - **Theming**: Comprehensive theme system with Tailwind CSS + Radix UI
 - **Localization**: i18next with 20+ language translations
-
 ## Common Development Commands
 
 ### Building and Development

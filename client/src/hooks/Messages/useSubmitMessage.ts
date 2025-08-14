@@ -45,12 +45,17 @@ export default function useSubmitMessage() {
       const overrideUserMessageId = hasAdded ? v4() : undefined;
       const rootIndex = addedIndex - 1;
       const clientTimestamp = new Date().toISOString();
+      
+      // Get selected personality from localStorage
+      const selectedPersonality = localStorage.getItem('selectedPersonality') || 'neutral';
+      console.log('[PersonalityEngine] Frontend sending personality:', selectedPersonality);
 
       ask({
         text: data.text,
         overrideConvoId: appendIndex(rootIndex, overrideConvoId),
         overrideUserMessageId: appendIndex(rootIndex, overrideUserMessageId),
         clientTimestamp,
+        personality: selectedPersonality, // Add personality to the request
       });
 
       if (hasAdded) {
@@ -60,6 +65,7 @@ export default function useSubmitMessage() {
             overrideConvoId: appendIndex(addedIndex, overrideConvoId),
             overrideUserMessageId: appendIndex(addedIndex, overrideUserMessageId),
             clientTimestamp,
+            personality: selectedPersonality, // Add personality to additional requests too
           },
           { overrideMessages: rootMessages },
         );

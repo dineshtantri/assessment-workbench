@@ -24,6 +24,7 @@ services:
       - type: bind
         source: ./.env
         target: /app/.env
+      - ./client/src:/app/client/src
       - ./images:/app/client/public/images
       - ./uploads:/app/uploads
       - ./logs:/app/api/logs
@@ -32,6 +33,8 @@ services:
     image: mongo
     restart: always
     user: "${UID}:${GID}"
+    ports:
+      - "27017:27017"
     volumes:
       - ./data-node:/data/db
     command: mongod --noauth

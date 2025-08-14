@@ -3,6 +3,10 @@ import { EndpointURLs } from './config';
 import * as s from './schemas';
 
 export default function createPayload(submission: t.TSubmission) {
+  console.log('[PersonalityEngine] CREATEPAYLOAD: Submission object:', submission);
+  console.log('[PersonalityEngine] CREATEPAYLOAD: Has personality:', !!submission.personality);
+  console.log('[PersonalityEngine] CREATEPAYLOAD: Personality value:', submission.personality);
+  
   const {
     isEdited,
     userMessage,
@@ -13,6 +17,7 @@ export default function createPayload(submission: t.TSubmission) {
     editedContent,
     ephemeralAgent,
     endpointOption,
+    personality,
   } = submission;
   const { conversationId } = s.tConvoUpdateSchema.parse(conversation);
   const { endpoint: _e, endpointType } = endpointOption as {
@@ -38,7 +43,10 @@ export default function createPayload(submission: t.TSubmission) {
     conversationId,
     isContinued: !!(isEdited && isContinued),
     ephemeralAgent: s.isAssistantsEndpoint(endpoint) ? undefined : ephemeralAgent,
+    personality,
   };
+  
+  console.log('[PersonalityEngine] CREATEPAYLOAD: Final payload personality:', payload.personality);
 
   return { server, payload };
 }

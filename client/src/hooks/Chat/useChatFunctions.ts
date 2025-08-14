@@ -79,6 +79,7 @@ export default function useChatFunctions({
       parentMessageId = null,
       conversationId = null,
       messageId = null,
+      personality,
     },
     {
       editedContent = null,
@@ -312,6 +313,7 @@ export default function useChatFunctions({
       initialResponse,
       isTemporary,
       ephemeralAgent,
+      personality,
       editedContent,
     };
 

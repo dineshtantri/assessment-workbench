@@ -8,8 +8,26 @@ const {
 } = require('~/server/middleware');
 const { disposeClient, clientRegistry, requestDataMap } = require('~/server/cleanup');
 const { saveMessage } = require('~/models');
+const { transformResponse } = require('~/utils/personalityEngine');
+
+// Helper function to get user's selected personality from session or default
+const getUserPersonality = (req) => {
+  // For now, check if personality is passed in request body or headers
+  // In production, this would come from user preferences in database
+  const personality = req.body.personality || req.headers['x-personality'] || 'neutral';
+  logger.info(`[PersonalityEngine] Backend: Extracted personality from request: ${personality}`);
+  logger.info(`[PersonalityEngine] Backend: Request body personality: ${req.body.personality}`);
+  logger.info(`[PersonalityEngine] Backend: Request header personality: ${req.headers['x-personality']}`);
+  return personality;
+};
 
 const AgentController = async (req, res, next, initializeClient, addTitle) => {
+  console.log('[PersonalityEngine] CONSOLE: Full request body:', req.body);
+  console.log('[PersonalityEngine] CONSOLE: Keys:', Object.keys(req.body));
+  console.log('[PersonalityEngine] CONSOLE: Personality:', req.body.personality);
+  logger.info(`[PersonalityEngine] DEBUG: Has text: ${!!req.body.text}`);
+  logger.info(`[PersonalityEngine] DEBUG: Has personality: ${!!req.body.personality}`);
+  
   let {
     text,
     isRegenerate,
@@ -214,6 +232,51 @@ const AgentController = async (req, res, next, initializeClient, addTitle) => {
     if (!abortController.signal.aborted) {
       // Create a new response object with minimal copies
       const finalResponse = { ...response };
+      
+      // Apply personality transformation to the response text
+      try {
+        const userPersonality = getUserPersonality(req);
+        console.log(`[PersonalityEngine] TRANSFORM: About to transform with personality: ${userPersonality}`);
+        console.log(`[PersonalityEngine] TRANSFORM: Response object keys:`, Object.keys(finalResponse));
+        console.log(`[PersonalityEngine] TRANSFORM: Response object:`, JSON.stringify(finalResponse, null, 2));
+        console.log(`[PersonalityEngine] TRANSFORM: Has response text:`, !!finalResponse.text);
+        console.log(`[PersonalityEngine] TRANSFORM: Response text length:`, finalResponse.text?.length || 0);
+        
+        // Extract text from either text field or content array
+        const responseText = finalResponse.text || 
+          (finalResponse.content && finalResponse.content[0] && finalResponse.content[0].text);
+        
+        console.log(`[PersonalityEngine] TRANSFORM: Extracted response text:`, !!responseText);
+        console.log(`[PersonalityEngine] TRANSFORM: Extracted text length:`, responseText?.length || 0);
+        
+        if (userPersonality !== 'neutral' && responseText) {
+          logger.info(`[PersonalityEngine] Transforming response with personality: ${userPersonality}`);
+          console.log(`[PersonalityEngine] TRANSFORM: Calling transformResponse...`);
+          const transformedText = await transformResponse(responseText, userPersonality);
+          console.log(`[PersonalityEngine] TRANSFORM: Got transformed text:`, !!transformedText);
+          console.log(`[PersonalityEngine] TRANSFORM: Transformed length:`, transformedText?.length || 0);
+          
+          if (transformedText && transformedText !== responseText) {
+            // Update both text field and content array with transformed text
+            if (finalResponse.text) {
+              finalResponse.text = transformedText;
+            }
+            if (finalResponse.content && finalResponse.content[0] && finalResponse.content[0].text) {
+              finalResponse.content[0].text = transformedText;
+            }
+            logger.info(`[PersonalityEngine] Response transformed successfully`);
+            console.log(`[PersonalityEngine] TRANSFORM: Applied transformation successfully`);
+          } else {
+            console.log(`[PersonalityEngine] TRANSFORM: No transformation applied - same text or empty result`);
+          }
+        } else {
+          console.log(`[PersonalityEngine] TRANSFORM: Skipping - neutral personality or no text`);
+        }
+      } catch (error) {
+        logger.error(`[PersonalityEngine] Transformation failed: ${error.message}`);
+        console.log(`[PersonalityEngine] TRANSFORM: ERROR:`, error);
+        // Continue with original response if transformation fails
+      }
 
       sendEvent(res, {
         final: true,

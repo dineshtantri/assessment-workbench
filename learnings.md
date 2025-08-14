@@ -84,4 +84,97 @@ grep -r "footer_text" client/src/locales/
 
 ---
 
+## Docker Pre-built Images vs Local Development
+
+### Problem: Component Changes Not Appearing Despite Volume Mounts
+
+**Date:** August 9, 2025  
+**Issue:** Added new AssessmentPhases component to left navigation, but component wasn't appearing even with Docker volume mounts configured.
+
+### Root Cause
+LibreChat's `docker-compose.yml` was using pre-built GitHub image (`ghcr.io/danny-avila/librechat-dev:latest`) instead of building from local source code. Even with volume mounts, the container was running the pre-built application bundle, not the local development files.
+
+### Investigation Process
+1. **Initial debugging attempts (didn't work):**
+   - Added volume mount: `./client/src:/app/client/src`
+   - Created test component with red borders and alert popups
+   - Cleared Docker cache: `docker system prune -f`
+   - Rebuilt with `--no-cache` flag
+   - Added console.log statements for debugging
+
+2. **Key discovery:** Container was using pre-built image, not local source
+   ```yaml
+   # Problem configuration in docker-compose.yml
+   api:
+     image: ghcr.io/danny-avila/librechat-dev:latest  # Pre-built image
+     volumes:
+       - ./client/src:/app/client/src  # Volume mount ineffective
+   ```
+
+### Solution
+Switch from Docker development to local development environment:
+
+```bash
+# Step 1: Start only database services in Docker
+docker compose up -d mongodb meilisearch vectordb rag_api
+
+# Step 2: Install dependencies locally
+npm install
+
+# Step 3: Build LibreChat packages (critical step)
+npm run build:data-provider
+npm run build:data-schemas  
+npm run build:api
+npm run build:client-package
+
+# Step 4: Start development servers locally
+npm run backend:dev    # Starts on default port
+npm run frontend:dev   # Starts on port 3091 (auto-incremented from 3090)
+```
+
+### Key Files Modified
+- **Component:** `client/src/components/Nav/AssessmentPhases.tsx` - New assessment phases component
+- **Navigation:** `client/src/components/Nav/Nav.tsx` - Imported and rendered AssessmentPhases
+- **Configuration:** Used existing LibreChat theming and component system
+
+### Debugging Techniques Used
+1. **Visual debugging:** Added red borders and background colors to test components
+2. **JavaScript alerts:** Used `window.alert()` to confirm component rendering
+3. **Console logging:** Added debug statements to track component lifecycle
+4. **Docker inspection:** Checked container creation times and image sources
+5. **Volume verification:** Tested if mounted files were accessible in container
+
+### Lessons Learned
+1. **Pre-built images ignore local changes** - even with volume mounts for built applications
+2. **LibreChat monorepo requires package builds** before running development servers
+3. **Local development is more reliable** for active development than Docker containers
+4. **Port conflicts are handled automatically** by Vite (3090 → 3091)
+5. **Component integration** works seamlessly with LibreChat's existing architecture
+
+### Key Commands for LibreChat Development
+```bash
+# Check what's using a port
+netstat -ano | findstr :3090
+
+# Build all required packages in correct order
+npm run build:data-provider && npm run build:data-schemas && npm run build:api && npm run build:client-package
+
+# Start database services only
+docker compose up -d mongodb meilisearch vectordb rag_api
+
+# Start development servers
+npm run backend:dev &
+npm run frontend:dev
+```
+
+### Docker vs Local Development Decision Matrix
+| Scenario | Recommendation | Reason |
+|----------|---------------|--------|
+| Active component development | Local | Real-time code changes |
+| Testing existing features | Docker | Matches production environment |
+| Database/backend services | Docker | Complex setup, standardized |
+| Frontend development | Local | Hot reload, debugging tools |
+
+---
+
 *This document tracks important debugging sessions and solutions for future reference.*

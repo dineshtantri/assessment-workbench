@@ -32,6 +32,7 @@ import SendButton from './SendButton';
 import EditBadges from './EditBadges';
 import BadgeRow from './BadgeRow';
 import Mention from './Mention';
+import InlinePersonalitySelector from './InlinePersonalitySelector';
 import store from '~/store';
 
 const ChatForm = memo(({ index = 0 }: { index?: number }) => {
@@ -44,6 +45,9 @@ const ChatForm = memo(({ index = 0 }: { index?: number }) => {
   const [visualRowCount, setVisualRowCount] = useState(1);
   const [isTextAreaFocused, setIsTextAreaFocused] = useState(false);
   const [backupBadges, setBackupBadges] = useState<Pick<BadgeItem, 'id'>[]>([]);
+  const [selectedPersonality, setSelectedPersonality] = useState(
+    localStorage.getItem('selectedPersonality') || 'neutral'
+  );
 
   const SpeechToText = useRecoilValue(store.speechToText);
   const TextToSpeech = useRecoilValue(store.textToSpeech);
@@ -190,6 +194,12 @@ const ChatForm = memo(({ index = 0 }: { index?: number }) => {
     setBackupBadges([]);
   }, [backupBadges, setBadges, setIsEditingBadges]);
 
+  const handlePersonalityChange = useCallback((personalityId: string) => {
+    console.log('[ChatForm] Personality changed to:', personalityId);
+    setSelectedPersonality(personalityId);
+    localStorage.setItem('selectedPersonality', personalityId);
+  }, []);
+
   const isMoreThanThreeRows = visualRowCount > 3;
 
   const baseClasses = useMemo(
@@ -294,6 +304,22 @@ const ChatForm = memo(({ index = 0 }: { index?: number }) => {
                 </div>
               </div>
             )}
+            {/* AI Personality Selector Row */}
+            <div 
+              className={cn(
+                'flex items-center justify-between px-3 py-1.5 border-t border-border-light/50',
+                isRTL ? 'flex-row-reverse' : 'flex-row'
+              )}
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <InlinePersonalitySelector
+                onPersonalityChange={handlePersonalityChange}
+                currentPersonality={selectedPersonality}
+                className="flex-1"
+              />
+            </div>
+            
             <div
               className={cn(
                 'items-between flex gap-2 pb-2',

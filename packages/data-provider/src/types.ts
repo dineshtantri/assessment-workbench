@@ -108,6 +108,7 @@ export type TPayload = Partial<TMessage> &
     messages?: TMessages;
     isTemporary: boolean;
     ephemeralAgent?: TEphemeralAgent | null;
+    personality?: string;
     editedContent?: {
       index: number;
       text: string;
@@ -129,6 +130,7 @@ export type TSubmission = {
   endpointOption: TEndpointOption;
   clientTimestamp?: string;
   ephemeralAgent?: TEphemeralAgent | null;
+  personality?: string;
   editedContent?: {
     index: number;
     text: string;

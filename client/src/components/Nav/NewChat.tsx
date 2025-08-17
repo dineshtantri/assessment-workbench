@@ -78,10 +78,8 @@ export default function NewChat({
                 aria-label={localize('com_ui_new_chat')}
                 className="rounded-full border-none bg-transparent p-2 hover:bg-surface-hover md:rounded-xl"
                 onClick={clickHandler}
-                style={{ border: '2px solid red' }}
               >
                 <NewChatIcon className="icon-md md:h-6 md:w-6" />
-                <span style={{ color: 'red', fontSize: '8px' }}>TEST</span>
               </Button>
             }
           />

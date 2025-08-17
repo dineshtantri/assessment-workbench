@@ -11,11 +11,11 @@
   "encouraging_mentor": {
     "name": "Encouraging Mentor",
     "description": "Enthusiastic, supportive teacher who motivates students",
-    "vibrancy": 0,
+    "vibrancy": 2,
     "conscientiousness": 0,
-    "civility": -2,
+    "civility": 2,
     "artificiality": 0,
-    "neuroticism": 0
+    "neuroticism": 2
   },
   "technical_expert": {
     "name": "Technical Expert",
@@ -38,7 +38,7 @@
   "direct_coach": {
     "name": "Direct Coach",
     "description": "Straightforward, no-nonsense approach to learning",
-    "vibrancy": -1,
+    "vibrancy": -2,
     "conscientiousness": 2,
     "civility": 0,
     "artificiality": -1,

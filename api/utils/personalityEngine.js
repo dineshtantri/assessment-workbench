@@ -27,26 +27,30 @@ const traitAdjectives = {
 // Master prompt template
 const PROMPT_TEMPLATE = `## CONTEXT
 
-### Personality Model:
-Given is a unique personality profile based on five key dimensions: **Vibrancy**, **Conscientiousness**, **Civility**, **Artificiality**, and **Neuroticism**.  
+### Roles
+- Conversation between a **Student** (human) and an **AI Assistant** (the assistant is the speaker to be rewritten).
 
-Each dimension has a set of associated adjectives:  
-- Vibrancy is described by the adjectives: <ADJ_VIBRANCY>
-- Conscientiousness is described by the adjectives: <ADJ_CONSCIENTIOUSNESS>
-- Civility is described by the adjectives: <ADJ_CIVILITY>
-- Artificiality is described by the adjectives: <ADJ_ARTIFICIALITY>
-- Neuroticism is described by the adjectives: <ADJ_NEUROTICISM>
+### Personality Model (M)
+Five dimensions: **Vibrancy**, **Conscientiousness**, **Civility**, **Artificiality**, **Neuroticism**.
+Each is defined by ordered descriptor lists:
 
-### Personality Scale:
-Each dimension has a certain intensity level from -2 (lowest) to +2 (highest).  
-- **Level -2:** the opposite of the trait is strongly present.  
-- **Level -1:** the opposite of the trait is mostly present.  
-- **Level 0:** the trait is neutral, neither implying nor contradicting the trait.  
-- **Level +1:** the trait is mostly present.  
-- **Level +2:** the trait is strongly present.  
+- Vibrancy: <ADJ_VIBRANCY>
+- Conscientiousness: <ADJ_CONSCIENTIOUSNESS>
+- Civility: <ADJ_CIVILITY>
+- Artificiality: <ADJ_ARTIFICIALITY>
+- Neuroticism: <ADJ_NEUROTICISM>
 
-### Personality Profile:
-The current personality settings are:  
+### Intensity Scale (S)
+Use a 5-point scale per trait:
+- **−2**: Opposite of the trait is strongly present
+- **−1**: Opposite mostly present
+- **0**: Neutral (no push)
+- **+1**: Trait mostly present
+- **+2**: Trait strongly present
+
+When a trait has a negative level, convey the **opposite tone** of its descriptors implicitly (do not use antonyms verbatim).
+
+### Target Personality Profile (p)
 - Vibrancy: <INT_VIBRANCY>
 - Conscientiousness: <INT_CONSCIENTIOUSNESS>
 - Civility: <INT_CIVILITY>
@@ -56,17 +60,25 @@ The current personality settings are:
 ---
 
 ## TASK
-Given a fictional conversation between <ROLE_A> and <ROLE_B>, rewrite the latest (and only the latest) utterance of <ROLE_B> such that the content, language, tone, and style of the utterance match the specified personality settings above.
+Rewrite **only the latest utterance by the AI Assistant** so that its **tone/style** matches the Target Personality Profile while **preserving meaning**.
+
+**Requirements**
+- Do **not** change facts, numbers, steps, code, equations, citations, or commitments.
+- Keep structure and formatting (lists, markdown, code blocks) unless tone requires light rephrasing.
+- Make style changes **proportional** to each trait’s intensity (avoid over-shooting at ±1).
+- Do **not** insert the model’s defining adjectives or any speaker labels.
 
 ---
 
 ## OUTPUT FORMAT
-Avoid using the trait's adjectives in the rewritten sentence. Output only the rewritten utterance without additional punctuation, speaker tags, or explanations.
+Return **only** the rewritten AI Assistant utterance.
+No quotes, no speaker tags, no explanations.
 
 ---
 
 ## ADDITIONAL DATA
 <CONVERSATION_CONTEXT>
+
 <CONVERSATION_HISTORY>`;
 
 /**
@@ -130,7 +142,7 @@ async function transformResponse(originalResponse, personalityId, conversationHi
       messages: [
         { role: 'user', content: prompt }
       ],
-      temperature: 0.7,
+      temperature: 0.8,
       max_tokens: 1000,
     });
 
